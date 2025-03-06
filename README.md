@@ -15,6 +15,10 @@ To clone this in Ubuntu or whatever you use if you don't know how, this is how: 
 
 and finally, ./main.sh
 
+
+/- edit 3/5/2025 6:17pm
+so, there was a bit of a problem with saving results if cloned from this git straight into ubuntu. so i'm hoping what i did fixes it, but what you wanna do before running anything and saving your results is running this command, i'm pretty sure you have to be inside the directory of "Abyssal" as well but im not 100% sure so I apologize. but anyways | mkdir -p "$HOME/Abyssal_Results"
+
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
