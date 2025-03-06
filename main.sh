@@ -685,7 +685,7 @@ fingerprint_services() {
 }
 
 save_results() {
-    local filename="scan_results_$(date +%Y%m%d_%H%M%S).txt"
+    local filename="$HOME/Abyssal_Results/scan_results_$(date +%Y%m%d_%H%M%S).txt"
     echo -e "${BLUE}[+] Saving results to $filename...${NC}"
     
     {
