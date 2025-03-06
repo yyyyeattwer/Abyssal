@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# ProScanner
+# Abyssal
 # Ver. 1.2.0
 # Inspired by RED_HAWK.
 
@@ -34,7 +34,6 @@ display_banner() {
 }
 
 
-# check if command exists
 command_exists() {
 	command -v "$1" >/dev/null 2>&1
 }
@@ -53,7 +52,6 @@ spinner() {
     printf "    \b\b\b\b"
 }
 
-# Check if required commands are installed
 check_requirements() {
     echo -e "${BLUE}[+] Checking requirements...${NC}"
     
@@ -88,7 +86,6 @@ check_requirements() {
     echo ""
 }
 
-# Function to validate IP address
 validate_ip() {
     local ip=$1
     local stat=1
@@ -105,7 +102,6 @@ validate_ip() {
     return $stat
 }
 
-# Function to validate domain
 validate_domain() {
     local domain=$1
     if [[ $domain =~ ^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$ ]]; then
@@ -115,7 +111,6 @@ validate_domain() {
     fi
 }
 
-# Get target (IP or domain) from user input or use their own IP
 get_target() {
     echo -e "${YELLOW}Enter an IP address or domain to scan (leave blank to scan your own IP):${NC}"
     read -r target_input
@@ -126,8 +121,7 @@ get_target() {
         TARGET_TYPE="ip"
     else
         TARGET=$target_input
-        
-        # Check if it's an IP or domain
+	
         if validate_ip "$TARGET"; then
             TARGET_TYPE="ip"
         elif validate_domain "$TARGET"; then
@@ -143,7 +137,6 @@ get_target() {
     echo ""
 }
 
-# Get basic information from ipinfo.io
 get_basic_info() {
     echo -e "${BLUE}[+] Retrieving basic information...${NC}"
     echo -e "${YELLOW}----------------------------------------${NC}"
@@ -167,8 +160,6 @@ get_basic_info() {
     fi
     
     IPINFO=$(curl -s "https://ipinfo.io/$IP/json")
-    
-    # Extract information from JSON response
     IP_ADDRESS=$(echo "$IPINFO" | grep -o '"ip": "[^"]*' | cut -d'"' -f4)
     HOSTNAME=$(echo "$IPINFO" | grep -o '"hostname": "[^"]*' | cut -d'"' -f4)
     CITY=$(echo "$IPINFO" | grep -o '"city": "[^"]*' | cut -d'"' -f4)
@@ -178,7 +169,6 @@ get_basic_info() {
     ISP=$(echo "$IPINFO" | grep -o '"org": "[^"]*' | cut -d'"' -f4)
     TIMEZONE=$(echo "$IPINFO" | grep -o '"timezone": "[^"]*' | cut -d'"' -f4)
     
-    # Display the information
     echo -e "${GREEN}IP Address:${NC} $IP_ADDRESS"
     [ ! -z "$HOSTNAME" ] && echo -e "${GREEN}Hostname:${NC} $HOSTNAME"
     [ ! -z "$CITY" ] && echo -e "${GREEN}City:${NC} $CITY"
@@ -191,7 +181,6 @@ get_basic_info() {
     echo ""
 }
 
-# Get HTTP headers if target is a domain
 get_http_headers() {
     if [ "$TARGET_TYPE" = "domain" ]; then
         echo -e "${BLUE}[+] Retrieving HTTP headers...${NC}"
@@ -207,7 +196,6 @@ get_http_headers() {
     fi
 }
 
-# Check security headers for a domain
 check_security_headers() {
     if [ "$TARGET_TYPE" = "domain" ]; then
         echo -e "${BLUE}[+] Checking security headers...${NC}"
@@ -251,7 +239,6 @@ check_security_headers() {
     fi
 }
 
-# Check if the domain is using CloudFlare
 check_cloudflare() {
     if [ "$TARGET_TYPE" = "domain" ]; then
         echo -e "${BLUE}[+] Checking for CloudFlare...${NC}"
@@ -270,7 +257,6 @@ check_cloudflare() {
     fi
 }
 
-# Check SSL certificate information
 check_ssl_cert() {
     if [ "$TARGET_TYPE" = "domain" ]; then
         echo -e "${BLUE}[+] Checking SSL certificate...${NC}"
@@ -288,7 +274,6 @@ check_ssl_cert() {
     fi
 }
 
-# Try to detect CMS if the target is a domain
 detect_cms() {
     if [ "$TARGET_TYPE" = "domain" ]; then
         echo -e "${BLUE}[+] Attempting to detect CMS...${NC}"
@@ -328,7 +313,6 @@ detect_cms() {
     fi
 }
 
-# Detect Web Application Firewall
 detect_waf() {
     if [ "$TARGET_TYPE" = "domain" ]; then
         echo -e "${BLUE}[+] Detecting Web Application Firewall...${NC}"
@@ -357,7 +341,6 @@ detect_waf() {
     fi
 }
 
-# Check robots.txt if the target is a domain
 check_robots() {
     if [ "$TARGET_TYPE" = "domain" ]; then
         echo -e "${BLUE}[+] Checking robots.txt...${NC}"
@@ -377,7 +360,6 @@ check_robots() {
     fi
 }
 
-# Get network information using hackertarget API
 get_network_info() {
     echo -e "${BLUE}[+] Retrieving network information...${NC}"
     echo -e "${YELLOW}----------------------------------------${NC}"
@@ -410,7 +392,6 @@ get_network_info() {
     echo ""
 }
 
-# Check for open ports using nmap if available or hackertarget API
 check_ports() {
     echo -e "${BLUE}[+] Checking open ports...${NC}"
     echo -e "${YELLOW}----------------------------------------${NC}"
@@ -427,13 +408,12 @@ check_ports() {
         if [ ! -z "$NMAP_RESULT" ]; then
             echo "$NMAP_RESULT" | grep -v "^#"
             
-            # Extract open ports for service analysis
             OPEN_PORTS=$(echo "$NMAP_RESULT" | grep "open" | awk '{print $1}' | cut -d '/' -f 1 | tr '\n' ',')
             if [ ! -z "$OPEN_PORTS" ]; then
                 echo -e "\n${GREEN}[✓] Open ports found: ${OPEN_PORTS%,}${NC}"
                 echo -e "${YELLOW}[!] Analyzing common services...${NC}"
                 
-                # Check for common vulnerabilities based on open ports
+                
                 if echo "$OPEN_PORTS" | grep -q "21"; then
                     echo -e "${RED}[!] FTP (Port 21) detected - Check for anonymous login${NC}"
                 fi
@@ -472,18 +452,18 @@ check_ports() {
     echo ""
 }
 
-# Advanced vulnerability scan (passive)
+
 check_vulnerabilities() {
     echo -e "${BLUE}[+] Performing passive vulnerability assessment...${NC}"
     echo -e "${YELLOW}----------------------------------------${NC}"
     
-    # Common vulnerability patterns
+    
     VULNS=0
     
     if [ "$TARGET_TYPE" = "domain" ]; then
         echo -e "${CYAN}[*] Checking for common security issues...${NC}"
         
-        # Check for SPF record
+        
         SPF_CHECK=$(dig +short TXT "$TARGET" | grep -i "v=spf")
         if [ -z "$SPF_CHECK" ]; then
             echo -e "${RED}[!] Missing SPF record - Email spoofing risk${NC}"
@@ -492,7 +472,7 @@ check_vulnerabilities() {
             echo -e "${GREEN}[✓] SPF record found${NC}"
         fi
         
-        # Check for DMARC record
+        
         DMARC_CHECK=$(dig +short TXT "_dmarc.$TARGET" | grep -i "v=DMARC")
         if [ -z "$DMARC_CHECK" ]; then
             echo -e "${RED}[!] Missing DMARC record - Email authentication risk${NC}"
@@ -501,7 +481,7 @@ check_vulnerabilities() {
             echo -e "${GREEN}[✓] DMARC record found${NC}"
         fi
         
-        # Check SSL/TLS security
+        
         if command_exists openssl; then
             echo -e "${CYAN}[*] Checking SSL/TLS configuration...${NC}"
             
@@ -514,7 +494,7 @@ check_vulnerabilities() {
                 echo -e "${GREEN}[✓] SSLv3 disabled${NC}"
             fi
             
-            # Check certificate expiration
+            
             CERT_EXPIRY=$(echo | openssl s_client -connect "$TARGET":443 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
             if [ ! -z "$CERT_EXPIRY" ]; then
                 EXPIRY_EPOCH=$(date -d "$CERT_EXPIRY" +%s)
@@ -530,7 +510,7 @@ check_vulnerabilities() {
             fi
         fi
         
-        # Check for vulnerable CMS versions if detected
+        
         if [ ! -z "$CMS_TYPE" ]; then
             echo -e "${CYAN}[*] Checking $CMS_TYPE vulnerabilities...${NC}"
             
@@ -543,7 +523,6 @@ check_vulnerabilities() {
         fi
     fi
     
-    # Report results
     if [ $VULNS -gt 0 ]; then
         echo -e "\n${RED}[!] Found $VULNS potential security issues${NC}"
     else
@@ -554,7 +533,7 @@ check_vulnerabilities() {
     echo ""
 }
 
-# Check IP reputation using AbuseIPDB
+
 check_ip_reputation() {
     echo -e "${BLUE}[+] Checking IP reputation...${NC}"
     echo -e "${YELLOW}----------------------------------------${NC}"
@@ -580,7 +559,7 @@ check_ip_reputation() {
     echo ""
 }
 
-# Run WHOIS lookup
+
 run_whois() {
     echo -e "${BLUE}[+] Running WHOIS lookup...${NC}"
     echo -e "${YELLOW}----------------------------------------${NC}"
@@ -601,7 +580,7 @@ run_whois() {
     echo ""
 }
 
-# Run reverse DNS lookup
+
 run_reverse_dns() {
     echo -e "${BLUE}[+] Running reverse DNS lookup...${NC}"
     echo -e "${YELLOW}----------------------------------------${NC}"
@@ -628,7 +607,7 @@ run_reverse_dns() {
     echo ""
 }
 
-# Run ping test
+
 run_ping_test() {
     echo -e "${BLUE}[+] Running ping test (3 packets)...${NC}"
     echo -e "${YELLOW}----------------------------------------${NC}"
@@ -637,7 +616,7 @@ run_ping_test() {
     echo ""
 }
 
-# Run traceroute if available
+
 run_traceroute() {
     if command_exists traceroute; then
         echo -e "${BLUE}[+] Running traceroute...${NC}"
@@ -651,7 +630,7 @@ run_traceroute() {
     fi
 }
 
-# Check for subdomains if target is a domain
+
 check_subdomains() {
     if [ "$TARGET_TYPE" = "domain" ]; then
         echo -e "${BLUE}[+] Checking for subdomains...${NC}"
@@ -673,7 +652,6 @@ check_subdomains() {
     fi
 }
 
-# Fingerprint services on open ports
 fingerprint_services() {
     echo -e "${BLUE}[+] Fingerprinting services on open ports...${NC}"
     echo -e "${YELLOW}----------------------------------------${NC}"
@@ -690,7 +668,7 @@ fingerprint_services() {
         if [ ! -z "$SERVICE_RESULT" ]; then
             echo "$SERVICE_RESULT" | grep -v "^#" | grep -E "PORT|tcp|udp"
             
-            # Extract potential vulnerabilities based on service versions
+           
             OUTDATED=$(echo "$SERVICE_RESULT" | grep -E "Apache/2\.[0-3]|nginx/1\.[0-9]\.|OpenSSH.{1,5}[1-6]|MySQL.{1,5}[1-4]|PHP.{1,5}[1-5]")
             if [ ! -z "$OUTDATED" ]; then
                 echo -e "\n${RED}[!] Potentially outdated services detected:${NC}"
@@ -706,8 +684,6 @@ fingerprint_services() {
     echo ""
 }
 
-# Show the main menu
-# Function to save results
 save_results() {
     local filename="scan_results_$(date +%Y%m%d_%H%M%S).txt"
     echo -e "${BLUE}[+] Saving results to $filename...${NC}"
@@ -885,7 +861,6 @@ show_menu() {
         91)
             echo -e "${BLUE}[+] Exporting results as JSON...${NC}"
             local filename="scan_results_$(date +%Y%m%d_%H%M%S).json"
-            # Simple JSON export (basic implementation)
             echo "{" > "$filename"
             echo "  \"target\": \"$TARGET\"," >> "$filename"
             echo "  \"type\": \"$TARGET_TYPE\"," >> "$filename"
@@ -975,7 +950,7 @@ show_menu() {
             fi
             ;;
         0) 
-            echo -e "${GREEN}Thank you for using ProScanner!${NC}"
+            echo -e "${GREEN}Thank you for using Abyssal!${NC}"
             exit 0
             ;;
         *)
@@ -998,5 +973,5 @@ show_menu
 
 echo -e "${BLUE}================================${NC}"
 echo -e "${PURPLE}${BOLD}SCAN COMPLETED SUCCESSFULLY${NC}"
-echo -e "${GREEN}Thank you for using ProScanner!${NC}"
+echo -e "${GREEN}Thank you for using Abyssal!${NC}"
 echo -e "${BLUE}=================================${NC}"
