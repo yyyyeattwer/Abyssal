@@ -784,7 +784,7 @@ show_menu() {
     echo -e "${CYAN}95.${NC} Change Target"
     echo -e "${CYAN}96.${NC} Check for Script Updates"
     echo -e "${CYAN}97.${NC} Save All Results to File"
-    echo -e "${CYAN}98.${NC} About ProScanner"
+    echo -e "${CYAN}98.${NC} About Abyssal"
     echo -e "${CYAN}99.${NC} Run All Scans"
     echo -e "${CYAN}0.${NC} Exit"
     
@@ -888,7 +888,7 @@ show_menu() {
             ;;
         96)
             echo -e "${BLUE}[+] Checking for updates...${NC}"
-            echo -e "${GREEN}[✓] You are running the latest version of ProScanner!${NC}"
+            echo -e "${GREEN}[✓] You are running the latest version of Abyssal!${NC}"
             ;;
         97)
             save_results
